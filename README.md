@@ -48,7 +48,6 @@ H-mean`"])
         content = []
         for one_data in test_data:
             img_path = one_data.get("image:FILE")
-            json_path = one_data.get("gt:FILE")
 
             print(img_path)
             img = cv2.imread(str(img_path))

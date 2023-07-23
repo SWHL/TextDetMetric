@@ -16,9 +16,9 @@
 flowchart LR
 
 A([Text Detect Algorithm]) --get_pred_txt.py--> B([pred_txt])
-B --compute_metric.py--> C([TextDetMetric]) --> Metric(["`Precision
+B --compute_metric.py--> C([TextDetMetric]) --> Metric(["Precision
 Recall
-H-mean`"])
+H-mean"])
 ```
 
 #### 数据集上评测

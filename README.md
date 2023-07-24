@@ -13,7 +13,7 @@
 
 #### 整体框架
 ```mermaid
-flowchart LR
+flowchart TD
 
 A([Text Detect Algorithm]) --get_pred_txt.py--> B([pred_txt])
 B --compute_metric.py--> C([TextDetMetric]) --> Metric(["Precision

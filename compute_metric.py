@@ -6,6 +6,6 @@ from text_det_metric import DetectionIoUEvaluator
 metric = DetectionIoUEvaluator()
 
 # pred_path
-pred_path = "1.txt"
+pred_path = "pred.txt"
 mertric = metric(pred_path)
 print(mertric)

@@ -1,4 +1,4 @@
-English | [简体中文](https://github.com/SWHL/RapidVideOCR/blob/main/docs/README_zh.md)
+English | [简体中文](https://github.com/SWHL/TextDetMetric/blob/main/docs/README_zh.md)
 
 ## Text Detect Metric
 <p align="left">

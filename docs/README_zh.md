@@ -15,12 +15,12 @@
 
 #### 整体框架
 ```mermaid
-flowchart TD
+flowchart LR
 
 A([Text Detect Algorithm]) --get_pred_txt.py--> B([pred_txt])
-B --compute_metric.py--> C([TextDetMetric]) --> Metric(["Precision
-Recall
-H-mean"])
+B --compute_metric.py--> C([TextDetMetric]) --> D([Precision])
+C --> E([Recall])
+C --> F([H-mean])
 ```
 
 #### 自己数据集上评测

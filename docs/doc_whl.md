@@ -25,6 +25,7 @@
     ```
 2. Run `get_pred_txt.py` to get `pred.txt`
     <details>
+    <summary>Click to expand</summary>
 
     ```python
     from pathlib import Path

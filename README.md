@@ -41,7 +41,8 @@ Here is the evaluation code of `ch_ppocr_v3_det` on the text detection test set 
     ```
 2. Run [`get_pred_txt.py`](./get_pred_txt.py) to get `pred.txt`.
     <details>
-
+        <summary>Click to expand</summary>
+    
     ```python
     from pathlib import Path
 

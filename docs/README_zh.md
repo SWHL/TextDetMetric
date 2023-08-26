@@ -23,13 +23,14 @@ Recall
 H-mean"])
 ```
 
-#### 数据集上评测
-- 如果想要评测其他文本检测算法，需要将预测结果写入`pre.txt`中，格式为`图像全路径\t检测框多边形坐标\t得分`
-    - ⚠️注意：图形全路径来自modelscope加载得到，只要保证`txt`和`json`在同一目录下即可。
-    - 如下示例：
-        ```text
-        C:\Users\xxxx\.cache\modelscope\hub\datasets\liekkas\text_det_test_dataset\master\data_files\extracted\f3ca4a17a478c1d798db96b03a5da8b144f13054fd06401e5a113a7ca4953491\text_det_test_dataset/25.jpg	[[[519.0, 634.0], [765.0, 632.0], [765.0, 683.0], [519.0, 685.0]]]	[0.8451064699863124]
-        ```
+#### 自己数据集上评测
+- 如果想要评测其他文本检测算法，需要将预测结果写入`pre.txt`中，格式为`图像全路径\t检测框多边形坐标\t耗时`
+- ⚠️注意：图形全路径来自modelscope加载得到，只要保证`txt`和`json`在同一目录下即可。
+- 如下示例：
+    ```text
+    C:\Users\xxxx\.cache\modelscope\hub\datasets\liekkas\text_det_test_dataset\master\data_files\extracted\f3ca4a17a478c1d798db96b03a5da8b144f13054fd06401e5a113a7ca4953491\text_det_test_dataset/25.jpg	[[[519.0, 634.0], [765.0, 632.0], [765.0, 683.0], [519.0, 685.0]]]	0.2804088592529297
+    ```
+
 - 这里以`ch_mobile_v2_det`在文本检测测试集[liekkas/text_det_test_dataset](https://www.modelscope.cn/datasets/liekkas/text_det_test_dataset/summary)上的评测代码，大家可以以此类推。
 - 安装必要的包
     ```bash
@@ -74,8 +75,8 @@ H-mean"])
 
         # pred_path
         pred_path = "pred.txt"
-        mertric = metric(pred_path)
-        print(mertric)
+        metric = metric(pred_path)
+        print(metric)
 
         # {'precision': 0.6926406926406926, 'recall': 0.8247422680412371, 'hmean': 0.7529411764705882}
         ```

@@ -5,15 +5,32 @@ import sys
 from pathlib import Path
 
 import cv2
+import yaml
 from modelscope.msdatasets import MsDataset
+from tqdm import tqdm
 
 cur_dir = Path(__file__).resolve().parent
 root_dir = cur_dir.parent
 
 sys.path.append(str(root_dir))
 
-from ch_mobile_v2_det import TextDetector
+from det_demos.ch_ppocr_v3_det import TextDetector
 from text_det_metric import DetectionIoUEvaluator
+
+
+def read_yaml(yaml_path):
+    with open(yaml_path, "rb") as f:
+        data = yaml.load(f, Loader=yaml.Loader)
+    return data
+
+
+config_path = root_dir / "det_demos" / "ch_ppocr_v3_det" / "config.yaml"
+config = read_yaml(str(config_path))
+
+# Configure the onnx model path.
+config["model_path"] = str(root_dir / "det_demos" / config["model_path"])
+
+text_detector = TextDetector(config)
 
 
 def get_pred(save_pred_path: str):
@@ -24,14 +41,13 @@ def get_pred(save_pred_path: str):
         split="test",
     )
 
-    text_detector = TextDetector()
-
     content = []
-    for one_data in test_data:
+    for one_data in tqdm(test_data):
         img_path = one_data.get("image:FILE")
+
         img = cv2.imread(str(img_path))
-        dt_boxes, scores, _ = text_detector(img)
-        content.append(f"{img_path}\t{dt_boxes.tolist()}\t{scores}")
+        dt_boxes, elapse = text_detector(img)
+        content.append(f"{img_path}\t{dt_boxes.tolist()}\t{elapse}")
 
     with open(save_pred_path, "w", encoding="utf-8") as f:
         for v in content:
@@ -46,7 +62,7 @@ def test_normal():
     get_pred(str(pred_path))
     result = metric(pred_path)
 
-    assert str(result["precision"]) == "0.6926406926406926"
-    assert str(result["recall"]) == "0.8247422680412371"
+    assert str(result["precision"]) == "0.6958333333333333"
+    assert str(result["recall"]) == "0.8608247422680413"
 
     Path(pred_path).unlink()

@@ -16,27 +16,30 @@ class DetectionIoUEvaluator:
         self.area_precision_constraint = area_precision_constraint
 
     def __call__(self, pred_txt_path: str):
-        preds, img_list = self.read_pred_txt(pred_txt_path)
+        preds, img_list, elapses = self.read_pred_txt(pred_txt_path)
         gts = self.read_gts(img_list)
 
         results = []
         for gt, pred in zip(gts, preds):
             results.append(self.evaluate_image(gt, pred))
 
+        avg_elapse = sum(elapses) / len(elapses)
         metrics = self.combine_results(results)
+        metrics['avg_elapse'] = avg_elapse
         return metrics
 
     def read_pred_txt(self, txt_path: str) -> Tuple[List, List]:
-        preds, image_list = [], []
+        preds, image_list, elapses = [], [], []
         datas = self.read_txt(txt_path)
         for data in datas:
-            image_path, dt_boxes = data.split("\t")[:2]
+            image_path, dt_boxes, elapse = data.split("\t")
             image_list.append(image_path)
             dt_boxes = ast.literal_eval(dt_boxes)
-
             result = [{"points": p, "text": "", "ignore": False} for p in dt_boxes]
             preds.append(result)
-        return preds, image_list
+
+            elapses.append(float(elapse))
+        return preds, image_list, elapses
 
     def read_gts(self, image_list: List) -> List[List[Dict]]:
         gts = []

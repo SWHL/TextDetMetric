@@ -7,5 +7,5 @@ metric = DetectionIoUEvaluator()
 
 # pred_path
 pred_path = "pred.txt"
-mertric = metric(pred_path)
-print(mertric)
+metric = metric(pred_path)
+print(metric)

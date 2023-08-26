@@ -1,4 +1,4 @@
-English | [简体中文](https://github.com/SWHL/TextDetMetric/blob/main/docs/README_zh.md)
+[简体中文](https://github.com/SWHL/TextDetMetric/blob/main/docs/README_zh.md) | English
 
 ## Text Detect Metric
 <p align="left">
@@ -23,59 +23,94 @@ Recall
 H-mean"])
 ```
 
-#### Evaluation on the dataset
-- If you want to evaluate other text detection algorithms, you need to write the prediction results into `pre.txt` in the format of `image full path\t detection frame polygon coordinates\t score`
-     - ⚠️Note: The full path of the image is loaded from the modelscope, as long as `txt` and `json` are in the same directory.
-     - The following example:
-         ```text
-         C:\Users\xxxx\.cache\modelscope\hub\datasets\liekkas\text_det_test_dataset\master\data_files\extracted\f3ca4a17a478c1d798db96b03a5da8b144f13054fd06401e5a113a7ca4953491\text_det_test_data set/25.jpg [[[519.0, 634.0], [765.0, 632.0], [765.0, 683.0], [519.0, 685.0]]] [0.8451064699863124]
-         ```
-- Here is the evaluation code of `ch_mobile_v2_det` on the text detection test set [liekkas/text_det_test_dataset](https://www.modelscope.cn/datasets/liekkas/text_det_test_dataset/summary), and you can use the same analogy.
-- Install necessary packages
-     ```bash
-     pip install modelscope==1.5.2
-     pip install text_det_metric
-     ```
-- Run
-     1. Run `get_pred_txt.py` to get `pred.txt`
-         ```python
-         import cv2
-         from modelscope.msdatasets import MsDataset
+#### Evaluation on custom dataset
+- If you want to evaluate other text detection algorithms, you need to write the prediction results into `pre.txt` in the format of `image full path\t detection frame polygon coordinates\t elapse`
+- ⚠️Note: The full path of the image is loaded from the modelscope, as long as `txt` and `json` are in the same directory.
+- The following example:
+    ```text
+    C:\Users\xxxx\.cache\modelscope\hub\datasets\liekkas\text_det_test_dataset\master\data_files\extracted\f3ca4a17a478c1d798db96b03a5da8b144f13054fd06401e5a113a7ca4953491\text_det_test_data set/25.jpg [[[519.0, 634.0], [765.0, 632.0], [765.0, 683.0], [519.0, 685.0]]] 0.2804088592529297
+    ```
 
-         from ch_mobile_v2_det import TextDetector
+#### Usage
+Here is the evaluation code of `ch_ppocr_v3_det` on the text detection test set [liekkas/text_det_test_dataset](https://www.modelscope.cn/datasets/liekkas/text_det_test_dataset/summary), and you can use the same analogy.
 
-         test_data = MsDataset.load(
-             "text_det_test_dataset",
-             namespace="liekkas",
-             subset_name="default",
-             split="test",
-         )
+1. Install necessary packages
+    ```bash
+    pip install modelscope==1.5.2
+    pip install text_det_metric
+    ```
+2. Run [`get_pred_txt.py`](./get_pred_txt.py) to get `pred.txt`.
+    <details>
 
-         text_detector = TextDetector()
+    ```python
+    from pathlib import Path
 
-         content = []
-         for one_data in test_data:
-             img_path = one_data. get("image:FILE")
+    import cv2
+    import yaml
+    from modelscope.msdatasets import MsDataset
+    from tqdm import tqdm
 
-             print(img_path)
-             img = cv2.imread(str(img_path))
-             dt_boxes, scores, _ = text_detector(img)
-             content.append(f"{img_path}\t{dt_boxes.tolist()}\t{scores}")
+    from det_demos.ch_ppocr_v3_det import TextDetector
 
-         with open("pred.txt", "w", encoding="utf-8") as f:
-             for v in content:
-                 f.write(f"{v}\n")
-         ```
-     2. Run `compute_metric.py` to get the metrics on the dataset
-         ```python
-         from text_det_metric import DetectionIoUEvaluator
+    root_dir = Path(__file__).resolve().parent
 
-         metric = DetectionIoUEvaluator()
 
-         # pred_path
-         pred_path = "pred.txt"
-         metric = metric(pred_path)
-         print(mertric)
+    def read_yaml(yaml_path):
+        with open(yaml_path, "rb") as f:
+            data = yaml.load(f, Loader=yaml.Loader)
+        return data
 
-         # {'precision': 0.6926406926406926, 'recall': 0.8247422680412371, 'hmean': 0.7529411764705882}
-         ```
+
+    test_data = MsDataset.load(
+        "text_det_test_dataset",
+        namespace="liekkas",
+        subset_name="default",
+        split="test",
+    )
+
+    config_path = root_dir / 'det_demos' / 'ch_ppocr_v3_det' / 'config.yaml'
+    config = read_yaml(str(config_path))
+
+    # Configure the onnx model path.
+    config['model_path'] = str(root_dir / 'det_demos' / config['model_path'])
+
+    text_detector = TextDetector(config)
+
+    content = []
+    for one_data in tqdm(test_data):
+        img_path = one_data.get("image:FILE")
+
+        img = cv2.imread(str(img_path))
+        dt_boxes, elapse = text_detector(img)
+        content.append(f"{img_path}\t{dt_boxes.tolist()}\t{elapse}")
+
+    with open("pred.txt", "w", encoding="utf-8") as f:
+        for v in content:
+            f.write(f"{v}\n")
+    ```
+    </details>
+
+3. Run [`compute_metric.py`](./compute_metric.py) to get the metrics on the dataset.
+    ```python
+    from text_det_metric import DetectionIoUEvaluator
+
+    metric = DetectionIoUEvaluator()
+
+    # pred_path
+    pred_path = "pred.txt"
+    metric = metric(pred_path)
+    print(metric)
+    ```
+4. Output
+    ```python
+    {
+        'precision': 0.6958333333333333,
+        'recall': 0.8608247422680413,
+        'hmean': 0.7695852534562212,
+        'avg_elapse': 2.0107483345529307
+    }
+    ```
+
+#### ChangeLog
+- 2023-08-26 v0.0.5 update:
+    - Add `avg_elapse` metric.

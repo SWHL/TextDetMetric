@@ -2,7 +2,7 @@ name: Push table_recognition_metric to pypi
 
 on:
   push:
-    branches: [ main ]
+    # branches: [ main ]
     # paths:
     #   - 'text_det_metric/**'
     #   - 'docs/doc_whl.md'

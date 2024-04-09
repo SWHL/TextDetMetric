@@ -3,8 +3,8 @@
 # @Contact: liekkaskono@163.com
 import argparse
 import ast
+import copy
 import json
-from pathlib import Path
 from typing import Dict, List, Tuple
 
 from shapely.geometry import Polygon
@@ -16,8 +16,7 @@ class DetectionIoUEvaluator:
         self.area_precision_constraint = area_precision_constraint
 
     def __call__(self, pred_txt_path: str):
-        preds, img_list, elapses = self.read_pred_txt(pred_txt_path)
-        gts = self.read_gts(img_list)
+        preds, gts, elapses = self.read_pred_txt(pred_txt_path)
 
         results = []
         for gt, pred in zip(gts, preds):
@@ -25,29 +24,37 @@ class DetectionIoUEvaluator:
 
         avg_elapse = sum(elapses) / len(elapses)
         metrics = self.combine_results(results)
-        metrics['avg_elapse'] = avg_elapse
+        metrics["avg_elapse"] = avg_elapse
         return metrics
 
     def read_pred_txt(self, txt_path: str) -> Tuple[List, List]:
-        preds, image_list, elapses = [], [], []
+        pred_boxes, gt_boxes, elapses = [], [], []
         datas = self.read_txt(txt_path)
         for data in datas:
-            image_path, dt_boxes, elapse = data.split("\t")
-            image_list.append(image_path)
-            dt_boxes = ast.literal_eval(dt_boxes)
-            result = [{"points": p, "text": "", "ignore": False} for p in dt_boxes]
-            preds.append(result)
+            cur_pred_boxes, cur_gt_boxes, elapse = data.split("\t")
+            cur_pred_boxes = ast.literal_eval(cur_pred_boxes)
+            cur_pred_boxes = [
+                {"points": p, "text": "", "ignore": False} for p in cur_pred_boxes
+            ]
+            pred_boxes.append(cur_pred_boxes)
+
+            cur_gt_boxes = ast.literal_eval(cur_gt_boxes)
+            tmp_gt_boxes = copy.deepcopy(cur_gt_boxes)
+            for i, points in enumerate(tmp_gt_boxes):
+                if len(points) == 2:
+                    x0, y0 = points[0]
+                    x1, y1 = points[1]
+
+                    points = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]
+                cur_gt_boxes[i] = points
+
+            cur_gt_boxes = [
+                {"points": p, "text": "", "ignore": False} for p in cur_gt_boxes
+            ]
+            gt_boxes.append(cur_gt_boxes)
 
             elapses.append(float(elapse))
-        return preds, image_list, elapses
-
-    def read_gts(self, image_list: List) -> List[List[Dict]]:
-        gts = []
-        for image_path in image_list:
-            json_path = Path(image_path).with_suffix(".json")
-            gt = self.parse_single_gt(str(json_path))
-            gts.append(gt)
-        return gts
+        return pred_boxes, gt_boxes, elapses
 
     @staticmethod
     def parse_single_gt(json_path: str) -> List[Dict]:

@@ -4,43 +4,30 @@
 from pathlib import Path
 
 import cv2
-import yaml
-from modelscope.msdatasets import MsDataset
+import numpy as np
+from datasets import load_dataset
+from rapidocr_onnxruntime import RapidOCR
 from tqdm import tqdm
-
-from det_demos.ch_ppocr_v3_det import TextDetector
 
 root_dir = Path(__file__).resolve().parent
 
+engine = RapidOCR()
 
-def read_yaml(yaml_path):
-    with open(yaml_path, "rb") as f:
-        data = yaml.load(f, Loader=yaml.Loader)
-    return data
-
-
-test_data = MsDataset.load(
-    "text_det_test_dataset",
-    namespace="liekkas",
-    subset_name="default",
-    split="test",
-)
-
-config_path = root_dir / "det_demos" / "ch_ppocr_v3_det" / "config.yaml"
-config = read_yaml(str(config_path))
-
-# Configure the onnx model path.
-config["model_path"] = str(root_dir / "det_demos" / config["model_path"])
-
-text_detector = TextDetector(config)
+dataset = load_dataset("SWHL/text_det_test_dataset")
+test_data = dataset["test"]
 
 content = []
-for one_data in tqdm(test_data):
-    img_path = one_data.get("image:FILE")
+for i, one_data in enumerate(tqdm(test_data)):
+    img = np.array(one_data.get("image"))
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
-    img = cv2.imread(str(img_path))
-    dt_boxes, elapse = text_detector(img)
-    content.append(f"{img_path}\t{dt_boxes.tolist()}\t{elapse}")
+    dt_boxes, elapse = engine(img, use_det=True, use_cls=False, use_rec=False)
+
+    dt_boxes = [] if dt_boxes is None else dt_boxes
+    elapse = 0 if elapse is None else elapse[0]
+
+    gt_boxes = [v["points"] for v in one_data["shapes"]]
+    content.append(f"{dt_boxes}\t{gt_boxes}\t{elapse}")
 
 with open("pred.txt", "w", encoding="utf-8") as f:
     for v in content:

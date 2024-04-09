@@ -1,19 +1,25 @@
-[简体中文](https://github.com/SWHL/TextDetMetric/blob/main/docs/README_zh.md) | English
+<div align="center">
+  <div align="center">
+    <h1><b>Text Detect Metric</b></h1>
+  </div>
+  <br/>
 
-## Text Detect Metric
-<p align="left">
-     <a href=""><img src="https://img.shields.io/badge/OS-Linux%2C%20Win%2C%20Mac-pink.svg"></a>
-     <a href=""><img src="https://img.shields.io/badge/python->=3.6,<3.12-aff.svg"></a>
-     <a href="https://pypi.org/project/text_det_metric/"><img alt="PyPI" src="https://img.shields.io/pypi/v/text_det_metric"></a>
-     <a href="https://pepy.tech/project/text_det_metric"><img src="https://static.pepy.tech/personalized-badge/text_det_metric?period=total&units=abbreviation&left_color=grey&right_color=blue&left_text=Downloads "></a>
+<a href=""><img src="https://img.shields.io/badge/OS-Linux%2C%20Win%2C%20Mac-pink.svg"></a>
+<a href=""><img src="https://img.shields.io/badge/python->=3.6,<3.12-aff.svg"></a>
+<a href="https://pypi.org/project/text_det_metric/"><img alt="PyPI" src="https://img.shields.io/pypi/v/text_det_metric"></a>
+<a href="https://pepy.tech/project/text_det_metric"><img src="https://static.pepy.tech/personalized-badge/text_det_metric?period=total&units=abbreviation&left_color=grey&right_color=blue&left_text=Downloads "></a>
 <a href="https://semver.org/"><img alt="SemVer2.0" src="https://img.shields.io/badge/SemVer-2.0-brightgreen"></a>
-     <a href="https://github.com/psf/black"><img src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
-</p>
+<a href="https://github.com/psf/black"><img src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 
-- This library is used to calculate the three metric `Precision`, `Recall` and `H-mean` to evaluate the effect of text detection algorithms. It is used in conjunction with [Modelscope-Text Detection Test Set](https://www.modelscope.cn/datasets/liekkas/text_det_test_dataset/summary).
-- Indicator calculation code reference: [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR/blob/b13f99607653c220ba94df2a8650edac086b0f37/ppocr/metrics/eval_det_iou.py) and [DB](https://github.com/MhLiao/DB/blob/3c32b808d4412680310d3d28eeb6a2d5bf1566c5/concern/icdar2015_eval/detection/iou.py#L8)
+</div>
 
-#### Overall framework
+
+### 简介
+该库用于计算`Precision`、`Recall`和`H-mean`三个指标，用来快速评测文本检测算法效果，与[text_det_test_dataset](https://huggingface.co/datasets/SWHL/text_det_test_dataset)配套使用。
+
+指标计算代码参考：[PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR/blob/b13f99607653c220ba94df2a8650edac086b0f37/ppocr/metrics/eval_det_iou.py) 和 [DB](https://github.com/MhLiao/DB/blob/3c32b808d4412680310d3d28eeb6a2d5bf1566c5/concern/icdar2015_eval/detection/iou.py#L8)
+
+### 整体框架
 ```mermaid
 flowchart LR
 
@@ -23,95 +29,63 @@ C --> E([Recall])
 C --> F([H-mean])
 ```
 
-#### Evaluation on custom dataset
-- If you want to evaluate other text detection algorithms, you need to write the prediction results into `pre.txt` in the format of `image full path\t detection frame polygon coordinates\t elapse`
-- ⚠️Note: The full path of the image is loaded from the modelscope, as long as `txt` and `json` are in the same directory.
-- The following example:
-    ```text
-    C:\Users\xxxx\.cache\modelscope\hub\datasets\liekkas\text_det_test_dataset\master\data_files\extracted\f3ca4a17a478c1d798db96b03a5da8b144f13054fd06401e5a113a7ca4953491\text_det_test_data set/25.jpg [[[519.0, 634.0], [765.0, 632.0], [765.0, 683.0], [519.0, 685.0]]] 0.2804088592529297
-    ```
+### 自己数据集上评测
+如果想要评测其他文本检测算法，需要将预测结果写入`pred.txt`中，格式为`预测框坐标\t真实框坐标\t耗时`，详细可参考[link](./pred.txt)。示例如下：
+```text
+[[[85.0, 43.0], [164.0, 44.0], [164.0, 72.0], [85.0, 70.0]]]	[[[473.36082474226805, 271.2938144329896], [520.7835051546391, 290.8814432989691]]]	0.14536070823669434
+```
 
-#### Usage
-Here is the evaluation code of `ch_ppocr_v3_det` on the text detection test set [liekkas/text_det_test_dataset](https://www.modelscope.cn/datasets/liekkas/text_det_test_dataset/summary), and you can use the same analogy.
-
-1. Install necessary packages
+### 示例（评测`rapidocr_onnxruntime==1.3.16`）
+1. 安装运行环境
     ```bash
-    pip install modelscope==1.5.2
+    pip install rapidocr_onnxruntime==1.3.16
+    pip install datasets
     pip install text_det_metric
     ```
-2. Run [`get_pred_txt.py`](./get_pred_txt.py) to get `pred.txt`.
-    <details>
-        <summary>Click to expand</summary>
-    
+2. 获得`pred.txt`文本文件
     ```python
     from pathlib import Path
-
     import cv2
-    import yaml
-    from modelscope.msdatasets import MsDataset
+    import numpy as np
+    from datasets import load_dataset
+    from rapidocr_onnxruntime import RapidOCR
     from tqdm import tqdm
-
-    from det_demos.ch_ppocr_v3_det import TextDetector
 
     root_dir = Path(__file__).resolve().parent
 
+    engine = RapidOCR()
 
-    def read_yaml(yaml_path):
-        with open(yaml_path, "rb") as f:
-            data = yaml.load(f, Loader=yaml.Loader)
-        return data
-
-
-    test_data = MsDataset.load(
-        "text_det_test_dataset",
-        namespace="liekkas",
-        subset_name="default",
-        split="test",
-    )
-
-    config_path = root_dir / 'det_demos' / 'ch_ppocr_v3_det' / 'config.yaml'
-    config = read_yaml(str(config_path))
-
-    # Configure the onnx model path.
-    config['model_path'] = str(root_dir / 'det_demos' / config['model_path'])
-
-    text_detector = TextDetector(config)
+    dataset = load_dataset("SWHL/text_det_test_dataset")
+    test_data = dataset["test"]
 
     content = []
-    for one_data in tqdm(test_data):
-        img_path = one_data.get("image:FILE")
+    for i, one_data in enumerate(tqdm(test_data)):
+        img = np.array(one_data.get("image"))
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
-        img = cv2.imread(str(img_path))
-        dt_boxes, elapse = text_detector(img)
-        content.append(f"{img_path}\t{dt_boxes.tolist()}\t{elapse}")
+        dt_boxes, elapse = engine(img, use_det=True, use_cls=False, use_rec=False)
+
+        dt_boxes = [] if dt_boxes is None else dt_boxes
+        elapse = 0 if elapse is None else elapse[0]
+
+        gt_boxes = [v["points"] for v in one_data["shapes"]]
+        content.append(f"{dt_boxes}\t{gt_boxes}\t{elapse}")
 
     with open("pred.txt", "w", encoding="utf-8") as f:
         for v in content:
             f.write(f"{v}\n")
     ```
-    </details>
-
-3. Run [`compute_metric.py`](./compute_metric.py) to get the metrics on the dataset.
+3. 计算指标
     ```python
     from text_det_metric import DetectionIoUEvaluator
 
     metric = DetectionIoUEvaluator()
-
-    # pred_path
     pred_path = "pred.txt"
     metric = metric(pred_path)
     print(metric)
-    ```
-4. Output
-    ```python
-    {
-        'precision': 0.6958333333333333,
-        'recall': 0.8608247422680413,
-        'hmean': 0.7695852534562212,
-        'avg_elapse': 2.0107483345529307
-    }
-    ```
 
-#### ChangeLog
-- 2023-08-26 v0.0.5 update:
-    - Add `avg_elapse` metric.
+    ```
+4. 得到结果
+    ```bash
+    {'precision': 0.8300988648846577, 'recall': 0.8659281894576012, 'hmean': 0.8476350719760704, 'avg_elapse': 0.22463044243038827}
+    ```

@@ -2,7 +2,6 @@
   <div align="center">
     <h1><b>Text Detect Metric</b></h1>
   </div>
-  <br/>
 
 <a href=""><img src="https://img.shields.io/badge/OS-Linux%2C%20Win%2C%20Mac-pink.svg"></a>
 <a href=""><img src="https://img.shields.io/badge/python->=3.6,<3.12-aff.svg"></a>

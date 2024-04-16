@@ -24,7 +24,7 @@ class DetectionIoUEvaluator:
 
         avg_elapse = sum(elapses) / len(elapses)
         metrics = self.combine_results(results)
-        metrics["avg_elapse"] = avg_elapse
+        metrics["avg_elapse"] = round(avg_elapse, 4)
         return metrics
 
     def read_pred_txt(self, txt_path: str) -> Tuple[List, List]:
@@ -188,9 +188,9 @@ class DetectionIoUEvaluator:
         )
 
         methodMetrics = {
-            "precision": methodPrecision,
-            "recall": methodRecall,
-            "hmean": methodHmean,
+            "precision": round(methodPrecision, 4),
+            "recall": round(methodRecall, 4),
+            "hmean": round(methodHmean, 4),
         }
         return methodMetrics
 

@@ -74,9 +74,9 @@ C --> F([H-mean])
     ```
 3. 计算指标
     ```python
-    from text_det_metric import DetectionIoUEvaluator
+    from text_det_metric import TextDetMetric
 
-    metric = DetectionIoUEvaluator()
+    metric = TextDetMetric()
     pred_path = "pred.txt"
     metric = metric(pred_path)
     print(metric)
@@ -84,5 +84,5 @@ C --> F([H-mean])
     ```
 4. 得到结果
     ```bash
-    {'precision': 0.8300988648846577, 'recall': 0.8659281894576012, 'hmean': 0.8476350719760704, 'avg_elapse': 0.22463044243038827}
+    {'precision': 0.8301, 'recall': 0.8659, 'hmean': 0.8476, 'avg_elapse': 0.2246}
     ```

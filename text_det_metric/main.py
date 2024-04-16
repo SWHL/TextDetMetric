@@ -10,7 +10,7 @@ from typing import Dict, List, Tuple
 from shapely.geometry import Polygon
 
 
-class DetectionIoUEvaluator:
+class TextDetMetric:
     def __init__(self, iou_constraint=0.5, area_precision_constraint=0.5):
         self.iou_constraint = iou_constraint
         self.area_precision_constraint = area_precision_constraint
@@ -218,7 +218,7 @@ def main():
     parser.add_argument("-pred", "--pred_path", type=str, required=True)
     args = parser.parse_args()
 
-    evaluator = DetectionIoUEvaluator()
+    evaluator = TextDetMetric()
     metrics = evaluator(args.pred_path)
     print(metrics)
 

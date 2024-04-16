@@ -1,4 +1,4 @@
-name: Push table_recognition_metric to pypi
+name: Push text_det_metric to pypi
 
 on:
   push:
